@@ -1,0 +1,32 @@
+@model EditPostViewModel
+@{
+    ViewData["Title"] = "글 수정";
+}
+
+<h1>글 수정</h1>
+
+<form asp-action="Edit" method="post" class="form-container">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="Title"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Content"></label>
+        <textarea asp-for="Content" class="form-control" rows="10"></textarea>
+        <span asp-validation-for="Content" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">수정</button>
+    <a href="/Board/Detail/@Model.Id" class="btn btn-secondary">취소</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

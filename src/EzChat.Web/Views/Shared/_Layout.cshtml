@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - EzChat</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="container">
+                <a class="navbar-brand" href="/">EzChat</a>
+                <ul class="navbar-nav">
+                    <li><a href="/">홈</a></li>
+                    <li><a href="/Board">게시판</a></li>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li><a href="/Chat">채팅</a></li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li><a href="/Admin">관리자</a></li>
+                        }
+                        <li>
+                            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-link">로그아웃</button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li><a href="/Account/Login">로그인</a></li>
+                        <li><a href="/Account/Register">회원가입</a></li>
+                    }
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+        @RenderBody()
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; @DateTime.Now.Year EzChat. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="~/js/site.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

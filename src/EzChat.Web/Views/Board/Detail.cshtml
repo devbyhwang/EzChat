@@ -1,0 +1,80 @@
+@model BoardPost
+@{
+    ViewData["Title"] = Model.Title;
+    var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var isAuthor = currentUserId == Model.AuthorId;
+    var isAdmin = User.IsInRole("Admin");
+}
+
+<div class="post-detail">
+    <h1>@Model.Title</h1>
+
+    <div class="post-meta">
+        <span>작성자: @(Model.Author?.DisplayName ?? Model.Author?.Email ?? "알 수 없음")</span>
+        <span>작성일: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+        <span>조회수: @Model.ViewCount</span>
+        @if (Model.UpdatedAt.HasValue)
+        {
+            <span>수정일: @Model.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+        }
+    </div>
+
+    <div class="post-content">
+        @Html.Raw(Model.Content)
+    </div>
+
+    <div class="post-actions">
+        <a href="/Board" class="btn btn-secondary">목록</a>
+        @if (isAuthor)
+        {
+            <a href="/Board/Edit/@Model.Id" class="btn btn-primary">수정</a>
+        }
+        @if (isAuthor || isAdmin)
+        {
+            <form asp-action="Delete" method="post" style="display:inline;"
+                  onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-danger">삭제</button>
+            </form>
+        }
+    </div>
+</div>
+
+<div class="comments-section">
+    <h3>댓글 (@Model.Comments.Count)</h3>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <form asp-action="AddComment" method="post" class="comment-form">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="PostId" value="@Model.Id" />
+            <textarea name="Content" class="form-control" rows="3" placeholder="댓글을 입력하세요..." required></textarea>
+            <button type="submit" class="btn btn-primary">댓글 작성</button>
+        </form>
+    }
+
+    <div class="comments-list">
+        @foreach (var comment in Model.Comments)
+        {
+            var isCommentAuthor = currentUserId == comment.AuthorId;
+            <div class="comment">
+                <div class="comment-header">
+                    <strong>@(comment.Author?.DisplayName ?? comment.Author?.Email ?? "알 수 없음")</strong>
+                    <span>@comment.CreatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                </div>
+                <div class="comment-content">@comment.Content</div>
+                @if (isCommentAuthor || isAdmin)
+                {
+                    <form asp-action="DeleteComment" method="post" style="display:inline;"
+                          onsubmit="return confirm('댓글을 삭제하시겠습니까?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@comment.Id" />
+                        <input type="hidden" name="postId" value="@Model.Id" />
+                        <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</div>

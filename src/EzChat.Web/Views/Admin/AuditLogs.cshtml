@@ -1,0 +1,36 @@
+@model IEnumerable<AdminAuditLog>
+@{
+    ViewData["Title"] = "감사 로그";
+}
+
+<h1>감사 로그</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>시간</th>
+            <th>관리자</th>
+            <th>작업</th>
+            <th>대상 유형</th>
+            <th>대상 ID</th>
+            <th>상세</th>
+            <th>IP</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in Model)
+        {
+            <tr>
+                <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@log.Admin?.Email</td>
+                <td>@log.Action</td>
+                <td>@(log.TargetType ?? "-")</td>
+                <td>@(log.TargetId ?? "-")</td>
+                <td>@(log.Details ?? "-")</td>
+                <td>@(log.IpAddress ?? "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a href="/Admin" class="btn btn-secondary">대시보드로 돌아가기</a>

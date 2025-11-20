@@ -1,0 +1,35 @@
+@model IEnumerable<ChatRoom>
+@{
+    ViewData["Title"] = "채팅방 목록";
+}
+
+<h1>채팅방 목록</h1>
+
+<div class="chat-header">
+    <a href="/Chat/Create" class="btn btn-primary">새 채팅방 만들기</a>
+</div>
+
+<div class="room-list">
+    @if (!Model.Any())
+    {
+        <p>채팅방이 없습니다. 새 채팅방을 만들어보세요!</p>
+    }
+    else
+    {
+        @foreach (var room in Model)
+        {
+            <div class="room-card">
+                <h3>@room.Name</h3>
+                @if (!string.IsNullOrEmpty(room.Description))
+                {
+                    <p class="room-description">@room.Description</p>
+                }
+                <div class="room-meta">
+                    <span>생성자: @(room.CreatedBy?.DisplayName ?? room.CreatedBy?.Email ?? "알 수 없음")</span>
+                    <span>최대 인원: @room.MaxUsers명</span>
+                </div>
+                <a href="/Chat/Room/@room.Id" class="btn btn-primary">입장</a>
+            </div>
+        }
+    }
+</div>

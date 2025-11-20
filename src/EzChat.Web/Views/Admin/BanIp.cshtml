@@ -1,0 +1,38 @@
+@model BanIpViewModel
+@{
+    ViewData["Title"] = "IP 차단";
+}
+
+<h1>IP 차단</h1>
+
+<form asp-action="BanIp" method="post" class="form-container">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="IpAddress"></label>
+        <input asp-for="IpAddress" class="form-control" placeholder="예: 192.168.1.1" />
+        <span asp-validation-for="IpAddress" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Reason"></label>
+        <textarea asp-for="Reason" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Reason" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ExpiresAt"></label>
+        <input asp-for="ExpiresAt" type="datetime-local" class="form-control" />
+        <span asp-validation-for="ExpiresAt" class="text-danger"></span>
+        <small class="form-text">비워두면 영구 차단됩니다.</small>
+    </div>
+
+    <button type="submit" class="btn btn-danger">차단</button>
+    <a href="/Admin/IpBans" class="btn btn-secondary">취소</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
