@@ -1,0 +1,58 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Master.cs" Inherits="EzChat.Web.MasterPages.SiteMaster" %>
+
+<!DOCTYPE html>
+<html lang="ko">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> - EzChat</title>
+    <link href="~/Content/css/site.css" rel="stylesheet" type="text/css" />
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server"></asp:ContentPlaceHolder>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <header>
+            <nav class="navbar">
+                <div class="container">
+                    <a class="navbar-brand" href="/">EzChat</a>
+                    <ul class="navbar-nav">
+                        <li><a href="/">홈</a></li>
+                        <li><a href="/Board/Default.aspx">게시판</a></li>
+                        <% if (Request.IsAuthenticated) { %>
+                            <li><a href="/Chat/Default.aspx">채팅</a></li>
+                            <% if (User.IsInRole("Admin")) { %>
+                                <li><a href="/Admin/Default.aspx">관리자</a></li>
+                            <% } %>
+                            <li>
+                                <asp:LinkButton ID="btnLogout" runat="server" OnClick="btnLogout_Click" CssClass="btn-link">로그아웃</asp:LinkButton>
+                            </li>
+                        <% } else { %>
+                            <li><a href="/Account/Login.aspx">로그인</a></li>
+                            <li><a href="/Account/Register.aspx">회원가입</a></li>
+                        <% } %>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+
+        <main class="container">
+            <asp:Panel ID="pnlSuccess" runat="server" CssClass="alert alert-success" Visible="false">
+                <asp:Literal ID="litSuccess" runat="server"></asp:Literal>
+            </asp:Panel>
+            <asp:Panel ID="pnlError" runat="server" CssClass="alert alert-danger" Visible="false">
+                <asp:Literal ID="litError" runat="server"></asp:Literal>
+            </asp:Panel>
+            <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>
+        </main>
+
+        <footer class="footer">
+            <div class="container">
+                <p>&copy; <%: DateTime.Now.Year %> EzChat. All rights reserved.</p>
+            </div>
+        </footer>
+    </form>
+
+    <script src="/Content/js/site.js"></script>
+    <asp:ContentPlaceHolder ID="ScriptsContent" runat="server"></asp:ContentPlaceHolder>
+</body>
+</html>

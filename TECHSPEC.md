@@ -3,25 +3,19 @@
 ## 기술 스택 개요
 
 ### 백엔드 프레임워크
-- **ASP.NET MVC 5** / **ASP.NET Core MVC**
-  - 선택: ASP.NET Core 8.0 (최신 LTS)
-  - 이유: 보안 패치 지원, 크로스 플랫폼, 성능 향상
+- **ASP.NET Web Forms**
+  - .NET Framework 4.8
+  - 페이지 기반 개발 모델 (.aspx / .aspx.cs)
 
 ### 데이터베이스
 - **Microsoft SQL Server**
   - 버전: SQL Server 2019+ / LocalDB (개발용)
-  - ORM: Entity Framework Core 8.0
-  - 마이그레이션: EF Core Migrations
-
-### 실시간 통신
-- **SignalR**
-  - 채팅 기능을 위한 WebSocket 기반 실시간 통신
-  - 자동 폴백 지원 (Long Polling)
+  - ADO.NET (SqlConnection, SqlCommand, SqlParameter)
 
 ### 인증/인가
-- **ASP.NET Core Identity**
-  - 역할 기반 접근 제어 (RBAC)
-  - 비밀번호 해싱: PBKDF2 (Identity 기본값)
+- **Forms Authentication**
+  - 역할 기반 접근 제어
+  - 비밀번호 해싱: PBKDF2
 
 ---
 
@@ -30,65 +24,46 @@
 ```
 EzChat/
 ├── EzChat.sln
-├── src/
-│   └── EzChat.Web/
-│       ├── Controllers/
-│       │   ├── AccountController.cs
-│       │   ├── AdminController.cs
-│       │   ├── BoardController.cs
-│       │   ├── ChatController.cs
-│       │   └── HomeController.cs
-│       ├── Models/
-│       │   ├── ApplicationUser.cs
-│       │   ├── ChatRoom.cs
-│       │   ├── ChatMessage.cs
-│       │   ├── BoardPost.cs
-│       │   ├── Comment.cs
-│       │   └── IpBan.cs
-│       ├── ViewModels/
-│       ├── Views/
-│       ├── Hubs/
-│       │   └── ChatHub.cs
-│       ├── Data/
-│       │   └── ApplicationDbContext.cs
-│       ├── Services/
-│       │   ├── IAuthService.cs
-│       │   ├── IAdminService.cs
-│       │   ├── IBoardService.cs
-│       │   └── IChatService.cs
-│       ├── Middleware/
-│       │   └── IpBanMiddleware.cs
-│       ├── wwwroot/
-│       │   ├── css/
-│       │   ├── js/
-│       │   └── lib/
-│       ├── appsettings.json
-│       └── Program.cs
-├── docs/
-│   ├── PLAN.md
-│   ├── TECHSPEC.md
-│   ├── SECURITY.md
-│   └── AGENT.md
-└── tests/
-    └── EzChat.Tests/
-```
-
----
-
-## NuGet 패키지
-
-### 필수 패키지
-```xml
-<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
-<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0" />
-<PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-```
-
-### 보안 패키지
-```xml
-<PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
-<PackageReference Include="HtmlSanitizer" Version="8.0.0" />
+├── EzChat.Web/
+│   ├── App_Code/
+│   │   ├── BLL/
+│   │   │   ├── SecurityHelper.cs
+│   │   │   ├── UserBLL.cs
+│   │   │   ├── BoardBLL.cs
+│   │   │   ├── ChatBLL.cs
+│   │   │   └── IpBanBLL.cs
+│   │   ├── DAL/
+│   │   │   └── DatabaseHelper.cs
+│   │   └── Models/
+│   │       └── User.cs
+│   ├── Admin/
+│   │   ├── Default.aspx(.cs)
+│   │   ├── Users.aspx(.cs)
+│   │   ├── IpBans.aspx(.cs)
+│   │   ├── Rooms.aspx(.cs)
+│   │   └── AuditLogs.aspx(.cs)
+│   ├── Account/
+│   │   ├── Login.aspx(.cs)
+│   │   └── Register.aspx(.cs)
+│   ├── Board/
+│   │   ├── Default.aspx(.cs)
+│   │   ├── Detail.aspx(.cs)
+│   │   ├── Create.aspx(.cs)
+│   │   └── Edit.aspx(.cs)
+│   ├── Chat/
+│   │   ├── Default.aspx(.cs)
+│   │   ├── Room.aspx(.cs)
+│   │   └── Create.aspx(.cs)
+│   ├── MasterPages/
+│   │   └── Site.Master(.cs)
+│   ├── Content/
+│   │   ├── css/site.css
+│   │   └── js/site.js
+│   ├── Default.aspx(.cs)
+│   ├── Web.config
+│   ├── Global.asax(.cs)
+│   └── EzChat.Web.csproj
+└── 문서/
 ```
 
 ---
@@ -97,124 +72,145 @@ EzChat/
 
 ### 테이블 구조
 
-#### AspNetUsers (Identity 확장)
-- Id (PK)
-- UserName
-- Email
-- PasswordHash
-- IsAdmin
-- CreatedAt
-- LastLoginAt
-- IsActive
+#### Users
+- Id (PK, INT, IDENTITY)
+- Email (NVARCHAR(100), UNIQUE)
+- PasswordHash (NVARCHAR(256))
+- DisplayName (NVARCHAR(50))
+- IsAdmin (BIT)
+- IsActive (BIT)
+- CreatedAt (DATETIME)
+- LastLoginAt (DATETIME, NULL)
 
 #### ChatRooms
-- Id (PK)
-- Name
-- CreatedBy (FK -> AspNetUsers)
-- CreatedAt
-- IsActive
+- Id (PK, INT, IDENTITY)
+- Name (NVARCHAR(100))
+- Description (NVARCHAR(500))
+- CreatedById (FK -> Users)
+- CreatedAt (DATETIME)
+- IsActive (BIT)
+- MaxUsers (INT)
 
 #### ChatMessages
-- Id (PK)
+- Id (PK, INT, IDENTITY)
 - RoomId (FK -> ChatRooms)
-- UserId (FK -> AspNetUsers)
-- Content
-- SentAt
+- UserId (FK -> Users)
+- Content (NVARCHAR(2000))
+- SentAt (DATETIME)
+- IsDeleted (BIT)
 
 #### BoardPosts
-- Id (PK)
-- Title
-- Content
-- AuthorId (FK -> AspNetUsers)
-- CreatedAt
-- UpdatedAt
-- ViewCount
+- Id (PK, INT, IDENTITY)
+- Title (NVARCHAR(200))
+- Content (NVARCHAR(MAX))
+- AuthorId (FK -> Users)
+- CreatedAt (DATETIME)
+- UpdatedAt (DATETIME, NULL)
+- ViewCount (INT)
+- IsDeleted (BIT)
 
 #### Comments
-- Id (PK)
+- Id (PK, INT, IDENTITY)
 - PostId (FK -> BoardPosts)
-- AuthorId (FK -> AspNetUsers)
-- Content
-- CreatedAt
+- AuthorId (FK -> Users)
+- Content (NVARCHAR(1000))
+- CreatedAt (DATETIME)
+- IsDeleted (BIT)
 
 #### IpBans
-- Id (PK)
-- IpAddress
-- Reason
-- BannedBy (FK -> AspNetUsers)
-- BannedAt
-- ExpiresAt (nullable)
+- Id (PK, INT, IDENTITY)
+- IpAddress (NVARCHAR(45))
+- Reason (NVARCHAR(500))
+- BannedById (FK -> Users)
+- BannedAt (DATETIME)
+- ExpiresAt (DATETIME, NULL)
+- IsActive (BIT)
+
+#### AuditLogs
+- Id (PK, INT, IDENTITY)
+- AdminId (FK -> Users)
+- Action (NVARCHAR(100))
+- TargetType (NVARCHAR(50))
+- TargetId (NVARCHAR(100))
+- Details (NVARCHAR(1000))
+- Timestamp (DATETIME)
+- IpAddress (NVARCHAR(45))
 
 ---
 
 ## 개발 환경 설정
 
 ### 필수 도구
-- Visual Studio 2022 / VS Code
-- .NET 8.0 SDK
+- Visual Studio 2022
+- .NET Framework 4.8
 - SQL Server 2019+ / LocalDB
 - Git
 
-### 로컬 개발 설정
-```bash
-# 프로젝트 생성
-dotnet new mvc -n EzChat.Web -o src/EzChat.Web
-
-# 패키지 설치
-cd src/EzChat.Web
-dotnet add package Microsoft.AspNetCore.Identity.EntityFrameworkCore
-dotnet add package Microsoft.EntityFrameworkCore.SqlServer
-dotnet add package Microsoft.EntityFrameworkCore.Tools
-
-# 데이터베이스 마이그레이션
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-
-# 실행
-dotnet run
-```
-
-### 연결 문자열 (개발용)
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=EzChatDb;Trusted_Connection=True;MultipleActiveResultSets=true"
-  }
-}
+### 연결 문자열 (Web.config)
+```xml
+<connectionStrings>
+  <add name="EzChatConnection"
+       connectionString="Server=(localdb)\mssqllocaldb;Database=EzChatDb;Trusted_Connection=True;"
+       providerName="System.Data.SqlClient" />
+</connectionStrings>
 ```
 
 ---
 
-## API 엔드포인트
+## 페이지 구조
 
 ### 인증
-- `POST /Account/Login` - 로그인
-- `POST /Account/Logout` - 로그아웃
-- `POST /Account/Register` - 회원가입
+- `/Account/Login.aspx` - 로그인
+- `/Account/Register.aspx` - 회원가입
 
 ### 관리자
-- `GET /Admin/Dashboard` - 대시보드
-- `POST /Admin/BanIp` - IP 차단
-- `POST /Admin/UnbanIp` - IP 차단 해제
-- `DELETE /Admin/DeleteUser/{id}` - 사용자 삭제
-- `DELETE /Admin/DeleteRoom/{id}` - 채팅방 삭제
+- `/Admin/Default.aspx` - 대시보드
+- `/Admin/Users.aspx` - 사용자 관리
+- `/Admin/IpBans.aspx` - IP 차단 관리
+- `/Admin/Rooms.aspx` - 채팅방 관리
+- `/Admin/AuditLogs.aspx` - 감사 로그
 
 ### 게시판
-- `GET /Board` - 게시글 목록
-- `GET /Board/Detail/{id}` - 게시글 상세
-- `POST /Board/Create` - 게시글 작성
-- `PUT /Board/Edit/{id}` - 게시글 수정
-- `DELETE /Board/Delete/{id}` - 게시글 삭제
+- `/Board/Default.aspx` - 게시글 목록
+- `/Board/Detail.aspx?id=` - 게시글 상세
+- `/Board/Create.aspx` - 게시글 작성
+- `/Board/Edit.aspx?id=` - 게시글 수정
 
 ### 채팅
-- `GET /Chat` - 채팅방 목록
-- `GET /Chat/Room/{id}` - 채팅방 입장
-- `POST /Chat/CreateRoom` - 채팅방 생성
+- `/Chat/Default.aspx` - 채팅방 목록
+- `/Chat/Room.aspx?id=` - 채팅방
+- `/Chat/Create.aspx` - 채팅방 생성
 
 ---
 
-## 버전 관리
-- Git Flow 전략 사용
-- 메인 브랜치: main
-- 개발 브랜치: develop
-- 기능 브랜치: feature/*
+## 보안 설정 (Web.config)
+
+### Forms Authentication
+```xml
+<authentication mode="Forms">
+  <forms loginUrl="~/Account/Login.aspx" timeout="30" protection="All" />
+</authentication>
+```
+
+### 폴더별 권한
+```xml
+<location path="Admin">
+  <system.web>
+    <authorization>
+      <allow roles="Admin" />
+      <deny users="*" />
+    </authorization>
+  </system.web>
+</location>
+```
+
+### 보안 헤더
+```xml
+<httpProtocol>
+  <customHeaders>
+    <add name="X-Content-Type-Options" value="nosniff" />
+    <add name="X-Frame-Options" value="DENY" />
+    <add name="X-XSS-Protection" value="1; mode=block" />
+  </customHeaders>
+</httpProtocol>
+```
