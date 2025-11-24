@@ -1,146 +1,200 @@
-# EzChat
+# EzChat - ASP.NET Web Forms 게시판 애플리케이션
 
-ASP.NET Web Forms 기반의 커뮤니티 플랫폼으로, 실시간 채팅과 게시판 기능을 제공합니다.
+ASP.NET Web Forms (.NET Framework 4.8) 기반의 게시판 애플리케이션입니다.
+사용자 인증, 게시판, 관리자 기능을 포함합니다.
+
+---
 
 ## 주요 기능
 
-- **사용자 인증**: 회원가입, 로그인, 세션 관리
-- **채팅**: 채팅방 생성/삭제, 실시간 메시지, 메시지 기록
-- **게시판**: 글 작성/수정/삭제, 댓글, 검색, 페이지네이션
-- **관리자 패널**: 대시보드, 사용자 관리, IP 차단, 감사 로그
+- **회원 관리**: 회원가입, 로그인, 로그아웃
+- **게시판**: 게시글 작성, 수정, 삭제, 검색, 페이지네이션
+- **관리자**: 사용자 관리, 게시글 관리 (탭 방식)
+- **보안**: PBKDF2 비밀번호 해싱, SQL Injection 방지, XSS 방지
+
+---
 
 ## 기술 스택
 
 | 구분 | 기술 |
 |------|------|
-| Backend | ASP.NET Web Forms (.NET Framework 4.8), C# |
-| Database | SQL Server / LocalDB |
-| Data Access | ADO.NET (파라미터화된 쿼리) |
-| Authentication | Forms Authentication |
-| Password | PBKDF2 해싱 (10,000 iterations) |
-| Frontend | ASPX, Custom CSS, Vanilla JavaScript |
+| 프레임워크 | ASP.NET Web Forms (.NET Framework 4.8) |
+| 데이터베이스 | Microsoft SQL Server / LocalDB |
+| 인증 | Forms Authentication |
+| 데이터 접근 | ADO.NET (SqlParameter) |
 
-## 시작하기
+---
 
-### 필수 조건
+## Visual Studio로 실행하기
 
-- Visual Studio 2022 (또는 이후 버전)
-- .NET Framework 4.8
-- SQL Server 2019+ 또는 LocalDB
+### 1. 필수 요구사항
 
-### 설치 및 실행
+- **Visual Studio 2022** (또는 2019)
+  - ASP.NET 및 웹 개발 워크로드 설치 필요
+- **.NET Framework 4.8** 개발자 팩
+- **SQL Server 2019+** 또는 **LocalDB** (Visual Studio와 함께 설치됨)
 
-1. **저장소 클론**
-   ```bash
-   git clone https://github.com/devbyhwang/EzChat.git
-   cd EzChat
-   ```
+### 2. 프로젝트 열기
 
-2. **솔루션 열기**
-   ```
-   Visual Studio에서 EzChat.sln 열기
-   ```
+1. Visual Studio를 실행합니다.
+2. **파일** → **열기** → **프로젝트/솔루션** 선택
+3. `EzChat.sln` 파일을 선택하여 엽니다.
 
-3. **빌드**
-   ```
-   Build > Build Solution (Ctrl+Shift+B)
-   ```
+```
+EzChat/
+└── EzChat.sln  ← 이 파일 선택
+```
 
-4. **실행**
-   ```
-   F5 키를 눌러 IIS Express로 실행
-   ```
+### 3. 연결 문자열 확인
 
-5. **데이터베이스**
-   - 애플리케이션 첫 실행 시 자동으로 초기화됩니다
-   - 연결 문자열은 `Web.config`에서 설정
+`EzChat.Web/Web.config` 파일에서 데이터베이스 연결 문자열을 확인합니다:
+
+```xml
+<connectionStrings>
+  <add name="EzChatConnection"
+       connectionString="Server=(localdb)\mssqllocaldb;Database=EzChatDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+       providerName="System.Data.SqlClient" />
+</connectionStrings>
+```
+
+> **참고**: 기본값은 LocalDB를 사용합니다. 별도의 SQL Server를 사용하려면 연결 문자열을 수정하세요.
+
+### 4. 프로젝트 실행
+
+#### 방법 1: F5 (디버그 모드)
+- **F5** 키를 눌러 디버그 모드로 실행
+- 브레이크포인트 설정 및 디버깅 가능
+
+#### 방법 2: Ctrl+F5 (디버그 없이 실행)
+- **Ctrl+F5** 키를 눌러 디버그 없이 실행
+- 더 빠르게 시작됨
+
+#### 방법 3: 메뉴 사용
+- **디버그** → **디버깅 시작** (또는 **디버깅하지 않고 시작**)
+
+### 5. 브라우저에서 확인
+
+실행 후 브라우저가 자동으로 열리며 기본 URL은 다음과 같습니다:
+```
+http://localhost:[포트번호]/
+```
+
+---
+
+## 초기 설정
+
+### 데이터베이스 자동 생성
+
+애플리케이션 첫 실행 시 `Global.asax`의 `Application_Start`에서 데이터베이스와 테이블이 자동으로 생성됩니다.
 
 ### 기본 관리자 계정
 
-- **Email**: `admin@ezchat.local`
-- **Password**: `Admin@123!`
+| 항목 | 값 |
+|------|------|
+| 아이디 | `admin` |
+| 비밀번호 | `Admin@123!` |
 
-> 프로덕션 환경에서는 반드시 기본 비밀번호를 변경하세요.
+> **보안 주의**: 프로덕션 환경에서는 반드시 관리자 비밀번호를 변경하세요!
+
+관리자 계정 설정은 `Web.config`에서 변경 가능합니다:
+```xml
+<appSettings>
+  <add key="AdminLoginID" value="admin" />
+  <add key="AdminPassword" value="Admin@123!" />
+</appSettings>
+```
+
+---
 
 ## 프로젝트 구조
 
 ```
 EzChat/
 ├── EzChat.sln                    # 솔루션 파일
-└── EzChat.Web/                   # 메인 웹 애플리케이션
-    ├── Account/                  # 인증 (Login, Register)
-    ├── Admin/                    # 관리자 패널
-    ├── Board/                    # 게시판
-    ├── Chat/                     # 채팅
-    ├── App_Code/                 # 서버 로직
-    │   ├── BLL/                  # 비즈니스 로직
-    │   ├── DAL/                  # 데이터 접근
-    │   └── Models/               # 데이터 모델
-    ├── Content/                  # CSS, JS
-    ├── MasterPages/              # 마스터 페이지
-    └── Web.config                # 설정 파일
+├── EzChat.Web/
+│   ├── App_Code/
+│   │   ├── BLL/                  # 비즈니스 로직 계층
+│   │   │   ├── SecurityHelper.cs # 보안 유틸리티
+│   │   │   ├── UserBLL.cs        # 사용자 비즈니스 로직
+│   │   │   └── BoardBLL.cs       # 게시판 비즈니스 로직
+│   │   ├── DAL/                  # 데이터 접근 계층
+│   │   │   └── DatabaseHelper.cs # DB 헬퍼
+│   │   └── Models/               # 데이터 모델
+│   │       └── User.cs           # User, Post 모델
+│   ├── Admin/                    # 관리자 페이지
+│   │   └── Default.aspx          # 사용자/게시글 관리 (탭)
+│   ├── Account/                  # 인증 페이지
+│   │   ├── Login.aspx            # 로그인
+│   │   └── Register.aspx         # 회원가입
+│   ├── Board/                    # 게시판 페이지
+│   │   ├── Default.aspx          # 게시글 목록
+│   │   ├── Detail.aspx           # 게시글 상세/수정
+│   │   └── Create.aspx           # 게시글 작성
+│   ├── MasterPages/
+│   │   └── Site.Master           # 마스터 페이지 (레이아웃)
+│   ├── Content/
+│   │   ├── css/site.css          # 스타일시트
+│   │   └── js/site.js            # JavaScript
+│   ├── Default.aspx              # 메인 페이지
+│   ├── Web.config                # 웹 설정
+│   └── Global.asax               # 애플리케이션 이벤트
+├── PLAN.md                       # 개발 계획
+├── TECHSPEC.md                   # 기술 스펙
+└── SECURITY.md                   # 보안 정책
 ```
 
-## 아키텍처
+---
 
-3계층 아키텍처를 따릅니다:
+## 페이지 URL
 
-```
-Presentation Layer (ASPX Pages)
-         ↓
-Business Logic Layer (BLL)
-         ↓
-Data Access Layer (DAL)
-         ↓
-SQL Server Database
-```
+| 페이지 | URL | 설명 |
+|--------|-----|------|
+| 홈 | `/` | 메인 페이지 |
+| 로그인 | `/Account/Login.aspx` | 로그인 |
+| 회원가입 | `/Account/Register.aspx` | 회원가입 |
+| 게시판 | `/Board/Default.aspx` | 게시글 목록 |
+| 게시글 상세 | `/Board/Detail.aspx?id=1` | 게시글 보기/수정 |
+| 게시글 작성 | `/Board/Create.aspx` | 새 게시글 작성 |
+| 관리자 | `/Admin/Default.aspx` | 관리자 페이지 |
 
-## 보안
+---
 
-- **SQL 인젝션 방지**: 모든 쿼리에 `SqlParameter` 사용
-- **XSS 방지**: `SecurityHelper.SanitizeInput()` 적용
-- **비밀번호 보안**: PBKDF2 해싱 (SHA256, 10,000 iterations)
-- **인증**: Forms Authentication with encrypted tickets
-- **권한 관리**: 역할 기반 접근 제어 (Admin, User)
+## 문제 해결
 
-## 데이터베이스 스키마
+### LocalDB 연결 오류
 
-| 테이블 | 설명 |
-|--------|------|
-| Users | 사용자 계정 |
-| ChatRooms | 채팅방 |
-| ChatMessages | 채팅 메시지 |
-| BoardPosts | 게시글 |
-| Comments | 댓글 |
-| IpBans | IP 차단 목록 |
-| AuditLogs | 감사 로그 |
+1. Visual Studio Installer에서 **SQL Server Express LocalDB** 설치 확인
+2. 명령 프롬프트에서 LocalDB 상태 확인:
+   ```cmd
+   sqllocaldb info mssqllocaldb
+   ```
+3. LocalDB 인스턴스 시작:
+   ```cmd
+   sqllocaldb start mssqllocaldb
+   ```
 
-## 설정
+### .NET Framework 4.8 오류
 
-### Web.config 주요 설정
+1. [.NET Framework 4.8 개발자 팩](https://dotnet.microsoft.com/download/dotnet-framework/net48) 다운로드 및 설치
+2. Visual Studio 재시작
 
-```xml
-<!-- 연결 문자열 -->
-<connectionStrings>
-  <add name="EzChatConnection"
-       connectionString="Server=(localdb)\mssqllocaldb;Database=EzChatDb;..."
-       providerName="System.Data.SqlClient" />
-</connectionStrings>
+### 포트 충돌
 
-<!-- 앱 설정 -->
-<appSettings>
-  <add key="DefaultAdminEmail" value="admin@ezchat.local" />
-  <add key="SessionTimeout" value="30" />
-</appSettings>
-```
+`EzChat.Web/Properties/launchSettings.json` 또는 프로젝트 속성에서 포트 번호 변경
 
-## 문서
+---
 
-- [TECHSPEC.md](TECHSPEC.md) - 기술 사양
-- [SECURITY.md](SECURITY.md) - 보안 정책
-- [PLAN.md](PLAN.md) - 개발 계획
-- [AGENT.md](AGENT.md) - AI 개발 가이드라인
+## 보안 참고사항
+
+- **비밀번호**: PBKDF2 (100,000 iterations) 해싱 사용
+- **SQL Injection**: ADO.NET SqlParameter 사용으로 방지
+- **XSS**: Server.HtmlEncode()로 출력 인코딩
+- **접근 제어**: Forms Authentication + 역할 기반 권한
+
+자세한 내용은 [SECURITY.md](SECURITY.md)를 참조하세요.
+
+---
 
 ## 라이선스
 
-이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+이 프로젝트는 학습 및 개인 프로젝트 목적으로 제작되었습니다.

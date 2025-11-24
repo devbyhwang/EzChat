@@ -9,20 +9,18 @@
         </asp:Panel>
 
         <div class="form-group">
-            <asp:Label ID="lblEmail" runat="server" AssociatedControlID="txtEmail" Text="이메일"></asp:Label>
-            <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email"></asp:TextBox>
-            <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ControlToValidate="txtEmail"
-                ErrorMessage="이메일을 입력해주세요." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
-            <asp:RegularExpressionValidator ID="revEmail" runat="server" ControlToValidate="txtEmail"
-                ValidationExpression="^[^@\s]+@[^@\s]+\.[^@\s]+$"
-                ErrorMessage="올바른 이메일 형식이 아닙니다." CssClass="text-danger" Display="Dynamic"></asp:RegularExpressionValidator>
+            <asp:Label ID="lblLoginId" runat="server" AssociatedControlID="txtLoginId" Text="아이디"></asp:Label>
+            <asp:TextBox ID="txtLoginId" runat="server" CssClass="form-control" MaxLength="100"></asp:TextBox>
+            <asp:RequiredFieldValidator ID="rfvLoginId" runat="server" ControlToValidate="txtLoginId"
+                ErrorMessage="아이디를 입력해주세요." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
+            <small class="form-text">4자 이상 입력해주세요.</small>
         </div>
 
         <div class="form-group">
-            <asp:Label ID="lblDisplayName" runat="server" AssociatedControlID="txtDisplayName" Text="닉네임"></asp:Label>
-            <asp:TextBox ID="txtDisplayName" runat="server" CssClass="form-control" MaxLength="50"></asp:TextBox>
-            <asp:RequiredFieldValidator ID="rfvDisplayName" runat="server" ControlToValidate="txtDisplayName"
-                ErrorMessage="닉네임을 입력해주세요." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
+            <asp:Label ID="lblUsername" runat="server" AssociatedControlID="txtUsername" Text="사용자 이름"></asp:Label>
+            <asp:TextBox ID="txtUsername" runat="server" CssClass="form-control" MaxLength="50"></asp:TextBox>
+            <asp:RequiredFieldValidator ID="rfvUsername" runat="server" ControlToValidate="txtUsername"
+                ErrorMessage="사용자 이름을 입력해주세요." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
         </div>
 
         <div class="form-group">

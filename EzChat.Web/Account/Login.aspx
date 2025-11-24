@@ -4,15 +4,19 @@
     <div class="auth-form">
         <h1>로그인</h1>
 
+        <asp:Panel ID="pnlSuccess" runat="server" CssClass="alert alert-success" Visible="false">
+            <asp:Literal ID="litSuccess" runat="server"></asp:Literal>
+        </asp:Panel>
+
         <asp:Panel ID="pnlError" runat="server" CssClass="alert alert-danger" Visible="false">
             <asp:Literal ID="litError" runat="server"></asp:Literal>
         </asp:Panel>
 
         <div class="form-group">
-            <asp:Label ID="lblEmail" runat="server" AssociatedControlID="txtEmail" Text="이메일"></asp:Label>
-            <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email"></asp:TextBox>
-            <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ControlToValidate="txtEmail"
-                ErrorMessage="이메일을 입력해주세요." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
+            <asp:Label ID="lblLoginId" runat="server" AssociatedControlID="txtLoginId" Text="아이디"></asp:Label>
+            <asp:TextBox ID="txtLoginId" runat="server" CssClass="form-control"></asp:TextBox>
+            <asp:RequiredFieldValidator ID="rfvLoginId" runat="server" ControlToValidate="txtLoginId"
+                ErrorMessage="아이디를 입력해주세요." CssClass="text-danger" Display="Dynamic"></asp:RequiredFieldValidator>
         </div>
 
         <div class="form-group">

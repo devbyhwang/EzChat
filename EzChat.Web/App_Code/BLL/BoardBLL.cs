@@ -19,11 +19,10 @@ namespace EzChat.Web.App_Code.BLL
             int offset = (page - 1) * pageSize;
 
             string query = @"
-                SELECT p.*, u.DisplayName AS AuthorName, u.Email AS AuthorEmail,
-                       (SELECT COUNT(*) FROM Comments WHERE PostId = p.Id AND IsDeleted = 0) AS CommentCount
-                FROM BoardPosts p
-                INNER JOIN Users u ON p.AuthorId = u.Id
-                WHERE p.IsDeleted = 0";
+                SELECT p.*, u.Username
+                FROM Posts p
+                INNER JOIN Users u ON p.UserID = u.UserID
+                WHERE 1=1";
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -51,11 +50,11 @@ namespace EzChat.Web.App_Code.BLL
         /// </summary>
         public static int GetTotalPostCount(string searchTerm = null)
         {
-            string query = "SELECT COUNT(*) FROM BoardPosts WHERE IsDeleted = 0";
+            string query = "SELECT COUNT(*) FROM Posts";
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query += " AND (Title LIKE @SearchTerm OR Content LIKE @SearchTerm)";
+                query += " WHERE (Title LIKE @SearchTerm OR Content LIKE @SearchTerm)";
                 return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query,
                     new SqlParameter("@SearchTerm", $"%{searchTerm}%")));
             }
@@ -66,15 +65,15 @@ namespace EzChat.Web.App_Code.BLL
         /// <summary>
         /// 게시글 상세 조회
         /// </summary>
-        public static BoardPost GetPostById(int id)
+        public static Post GetPostById(int id)
         {
             string query = @"
-                SELECT p.*, u.DisplayName AS AuthorName, u.Email AS AuthorEmail
-                FROM BoardPosts p
-                INNER JOIN Users u ON p.AuthorId = u.Id
-                WHERE p.Id = @Id AND p.IsDeleted = 0";
+                SELECT p.*, u.Username
+                FROM Posts p
+                INNER JOIN Users u ON p.UserID = u.UserID
+                WHERE p.PostID = @PostID";
 
-            DataTable dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@Id", id));
+            DataTable dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@PostID", id));
 
             if (dt.Rows.Count == 0)
             {
@@ -82,35 +81,33 @@ namespace EzChat.Web.App_Code.BLL
             }
 
             DataRow row = dt.Rows[0];
-            return new BoardPost
+            return new Post
             {
-                Id = Convert.ToInt32(row["Id"]),
+                PostID = Convert.ToInt32(row["PostID"]),
+                UserID = Convert.ToInt32(row["UserID"]),
+                Username = row["Username"].ToString(),
                 Title = row["Title"].ToString(),
                 Content = row["Content"].ToString(),
-                AuthorId = Convert.ToInt32(row["AuthorId"]),
-                AuthorName = row["AuthorName"]?.ToString() ?? row["AuthorEmail"].ToString(),
-                CreatedAt = Convert.ToDateTime(row["CreatedAt"]),
-                UpdatedAt = row["UpdatedAt"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["UpdatedAt"]),
-                ViewCount = Convert.ToInt32(row["ViewCount"])
+                CreatedAt = Convert.ToDateTime(row["CreatedAt"])
             };
         }
 
         /// <summary>
         /// 게시글 작성
         /// </summary>
-        public static int CreatePost(string title, string content, int authorId)
+        public static int CreatePost(string title, string content, int userId)
         {
             string sanitizedTitle = SecurityHelper.SanitizeInput(title);
             string sanitizedContent = SecurityHelper.SanitizeInput(content);
 
-            string query = @"INSERT INTO BoardPosts (Title, Content, AuthorId)
-                            OUTPUT INSERTED.Id
-                            VALUES (@Title, @Content, @AuthorId)";
+            string query = @"INSERT INTO Posts (Title, Content, UserID)
+                            OUTPUT INSERTED.PostID
+                            VALUES (@Title, @Content, @UserID)";
 
             object result = DatabaseHelper.ExecuteScalar(query,
                 new SqlParameter("@Title", sanitizedTitle),
                 new SqlParameter("@Content", sanitizedContent),
-                new SqlParameter("@AuthorId", authorId));
+                new SqlParameter("@UserID", userId));
 
             return Convert.ToInt32(result);
         }
@@ -118,20 +115,28 @@ namespace EzChat.Web.App_Code.BLL
         /// <summary>
         /// 게시글 수정
         /// </summary>
-        public static bool UpdatePost(int id, string title, string content, int authorId)
+        public static bool UpdatePost(int id, string title, string content, int userId, bool isAdmin)
         {
             string sanitizedTitle = SecurityHelper.SanitizeInput(title);
             string sanitizedContent = SecurityHelper.SanitizeInput(content);
 
-            string query = @"UPDATE BoardPosts
-                            SET Title = @Title, Content = @Content, UpdatedAt = GETUTCDATE()
-                            WHERE Id = @Id AND AuthorId = @AuthorId";
+            string query = isAdmin
+                ? @"UPDATE Posts SET Title = @Title, Content = @Content WHERE PostID = @PostID"
+                : @"UPDATE Posts SET Title = @Title, Content = @Content WHERE PostID = @PostID AND UserID = @UserID";
+
+            if (isAdmin)
+            {
+                return DatabaseHelper.ExecuteNonQuery(query,
+                    new SqlParameter("@PostID", id),
+                    new SqlParameter("@Title", sanitizedTitle),
+                    new SqlParameter("@Content", sanitizedContent)) > 0;
+            }
 
             return DatabaseHelper.ExecuteNonQuery(query,
-                new SqlParameter("@Id", id),
+                new SqlParameter("@PostID", id),
                 new SqlParameter("@Title", sanitizedTitle),
                 new SqlParameter("@Content", sanitizedContent),
-                new SqlParameter("@AuthorId", authorId)) > 0;
+                new SqlParameter("@UserID", userId)) > 0;
         }
 
         /// <summary>
@@ -140,79 +145,31 @@ namespace EzChat.Web.App_Code.BLL
         public static bool DeletePost(int id, int userId, bool isAdmin)
         {
             string query = isAdmin
-                ? "UPDATE BoardPosts SET IsDeleted = 1 WHERE Id = @Id"
-                : "UPDATE BoardPosts SET IsDeleted = 1 WHERE Id = @Id AND AuthorId = @AuthorId";
+                ? "DELETE FROM Posts WHERE PostID = @PostID"
+                : "DELETE FROM Posts WHERE PostID = @PostID AND UserID = @UserID";
 
             if (isAdmin)
             {
-                return DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@Id", id)) > 0;
+                return DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@PostID", id)) > 0;
             }
 
             return DatabaseHelper.ExecuteNonQuery(query,
-                new SqlParameter("@Id", id),
-                new SqlParameter("@AuthorId", userId)) > 0;
+                new SqlParameter("@PostID", id),
+                new SqlParameter("@UserID", userId)) > 0;
         }
 
         /// <summary>
-        /// 조회수 증가
+        /// 모든 게시글 조회 (관리자용)
         /// </summary>
-        public static void IncrementViewCount(int id)
-        {
-            string query = "UPDATE BoardPosts SET ViewCount = ViewCount + 1 WHERE Id = @Id";
-            DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@Id", id));
-        }
-
-        /// <summary>
-        /// 댓글 목록 조회
-        /// </summary>
-        public static DataTable GetComments(int postId)
+        public static DataTable GetAllPosts()
         {
             string query = @"
-                SELECT c.*, u.DisplayName AS AuthorName, u.Email AS AuthorEmail
-                FROM Comments c
-                INNER JOIN Users u ON c.AuthorId = u.Id
-                WHERE c.PostId = @PostId AND c.IsDeleted = 0
-                ORDER BY c.CreatedAt ASC";
+                SELECT p.*, u.Username
+                FROM Posts p
+                INNER JOIN Users u ON p.UserID = u.UserID
+                ORDER BY p.CreatedAt DESC";
 
-            return DatabaseHelper.ExecuteQuery(query, new SqlParameter("@PostId", postId));
-        }
-
-        /// <summary>
-        /// 댓글 작성
-        /// </summary>
-        public static int AddComment(int postId, string content, int authorId)
-        {
-            string sanitizedContent = SecurityHelper.SanitizeInput(content);
-
-            string query = @"INSERT INTO Comments (PostId, Content, AuthorId)
-                            OUTPUT INSERTED.Id
-                            VALUES (@PostId, @Content, @AuthorId)";
-
-            object result = DatabaseHelper.ExecuteScalar(query,
-                new SqlParameter("@PostId", postId),
-                new SqlParameter("@Content", sanitizedContent),
-                new SqlParameter("@AuthorId", authorId));
-
-            return Convert.ToInt32(result);
-        }
-
-        /// <summary>
-        /// 댓글 삭제
-        /// </summary>
-        public static bool DeleteComment(int id, int userId, bool isAdmin)
-        {
-            string query = isAdmin
-                ? "UPDATE Comments SET IsDeleted = 1 WHERE Id = @Id"
-                : "UPDATE Comments SET IsDeleted = 1 WHERE Id = @Id AND AuthorId = @AuthorId";
-
-            if (isAdmin)
-            {
-                return DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@Id", id)) > 0;
-            }
-
-            return DatabaseHelper.ExecuteNonQuery(query,
-                new SqlParameter("@Id", id),
-                new SqlParameter("@AuthorId", userId)) > 0;
+            return DatabaseHelper.ExecuteQuery(query);
         }
     }
 }

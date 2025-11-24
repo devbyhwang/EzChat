@@ -17,33 +17,33 @@ namespace EzChat.Web.App_Code.BLL
         /// </summary>
         public static void CreateDefaultAdmin()
         {
-            string adminEmail = ConfigurationManager.AppSettings["AdminEmail"] ?? "admin@ezchat.local";
+            string adminLoginId = ConfigurationManager.AppSettings["AdminLoginID"] ?? "admin";
             string adminPassword = ConfigurationManager.AppSettings["AdminPassword"] ?? "Admin@123!";
 
-            if (GetUserByEmail(adminEmail) == null)
+            if (GetUserByLoginID(adminLoginId) == null)
             {
                 string passwordHash = SecurityHelper.HashPassword(adminPassword);
 
-                string query = @"INSERT INTO Users (Email, PasswordHash, DisplayName, IsAdmin, IsActive)
-                                VALUES (@Email, @PasswordHash, @DisplayName, 1, 1)";
+                string query = @"INSERT INTO Users (Username, UserLoginID, PasswordHash, IsAdmin)
+                                VALUES (@Username, @UserLoginID, @PasswordHash, 1)";
 
                 DatabaseHelper.ExecuteNonQuery(query,
-                    new SqlParameter("@Email", adminEmail),
-                    new SqlParameter("@PasswordHash", passwordHash),
-                    new SqlParameter("@DisplayName", "Administrator"));
+                    new SqlParameter("@Username", "관리자"),
+                    new SqlParameter("@UserLoginID", adminLoginId),
+                    new SqlParameter("@PasswordHash", passwordHash));
             }
         }
 
         /// <summary>
         /// 사용자 등록
         /// </summary>
-        public static bool Register(string email, string password, string displayName, out string errorMessage)
+        public static bool Register(string userLoginId, string password, string username, out string errorMessage)
         {
             errorMessage = string.Empty;
 
-            if (!SecurityHelper.IsValidEmail(email))
+            if (string.IsNullOrWhiteSpace(userLoginId) || userLoginId.Length < 4)
             {
-                errorMessage = "올바른 이메일 형식이 아닙니다.";
+                errorMessage = "아이디는 4자 이상이어야 합니다.";
                 return false;
             }
 
@@ -52,22 +52,29 @@ namespace EzChat.Web.App_Code.BLL
                 return false;
             }
 
-            if (GetUserByEmail(email) != null)
+            if (string.IsNullOrWhiteSpace(username))
             {
-                errorMessage = "이미 사용 중인 이메일입니다.";
+                errorMessage = "사용자 이름을 입력해주세요.";
+                return false;
+            }
+
+            if (GetUserByLoginID(userLoginId) != null)
+            {
+                errorMessage = "이미 사용 중인 아이디입니다.";
                 return false;
             }
 
             string passwordHash = SecurityHelper.HashPassword(password);
-            string sanitizedDisplayName = SecurityHelper.SanitizeInput(displayName);
+            string sanitizedUsername = SecurityHelper.SanitizeInput(username);
+            string sanitizedLoginId = SecurityHelper.SanitizeInput(userLoginId);
 
-            string query = @"INSERT INTO Users (Email, PasswordHash, DisplayName, IsAdmin, IsActive)
-                            VALUES (@Email, @PasswordHash, @DisplayName, 0, 1)";
+            string query = @"INSERT INTO Users (Username, UserLoginID, PasswordHash, IsAdmin)
+                            VALUES (@Username, @UserLoginID, @PasswordHash, 0)";
 
             int result = DatabaseHelper.ExecuteNonQuery(query,
-                new SqlParameter("@Email", email),
-                new SqlParameter("@PasswordHash", passwordHash),
-                new SqlParameter("@DisplayName", sanitizedDisplayName));
+                new SqlParameter("@Username", sanitizedUsername),
+                new SqlParameter("@UserLoginID", sanitizedLoginId),
+                new SqlParameter("@PasswordHash", passwordHash));
 
             return result > 0;
         }
@@ -75,42 +82,33 @@ namespace EzChat.Web.App_Code.BLL
         /// <summary>
         /// 로그인 검증
         /// </summary>
-        public static User ValidateLogin(string email, string password, out string errorMessage)
+        public static User ValidateLogin(string userLoginId, string password, out string errorMessage)
         {
             errorMessage = string.Empty;
 
-            User user = GetUserByEmail(email);
+            User user = GetUserByLoginID(userLoginId);
             if (user == null)
             {
-                errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다.";
-                return null;
-            }
-
-            if (!user.IsActive)
-            {
-                errorMessage = "비활성화된 계정입니다.";
+                errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다.";
                 return null;
             }
 
             if (!SecurityHelper.VerifyPassword(password, user.PasswordHash))
             {
-                errorMessage = "이메일 또는 비밀번호가 올바르지 않습니다.";
+                errorMessage = "아이디 또는 비밀번호가 올바르지 않습니다.";
                 return null;
             }
-
-            // 마지막 로그인 시간 업데이트
-            UpdateLastLogin(user.Id);
 
             return user;
         }
 
         /// <summary>
-        /// 이메일로 사용자 조회
+        /// 로그인 ID로 사용자 조회
         /// </summary>
-        public static User GetUserByEmail(string email)
+        public static User GetUserByLoginID(string userLoginId)
         {
-            string query = "SELECT * FROM Users WHERE Email = @Email";
-            DataTable dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@Email", email));
+            string query = "SELECT * FROM Users WHERE UserLoginID = @UserLoginID";
+            DataTable dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@UserLoginID", userLoginId));
 
             if (dt.Rows.Count == 0)
             {
@@ -125,8 +123,8 @@ namespace EzChat.Web.App_Code.BLL
         /// </summary>
         public static User GetUserById(int id)
         {
-            string query = "SELECT * FROM Users WHERE Id = @Id";
-            DataTable dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@Id", id));
+            string query = "SELECT * FROM Users WHERE UserID = @UserID";
+            DataTable dt = DatabaseHelper.ExecuteQuery(query, new SqlParameter("@UserID", id));
 
             if (dt.Rows.Count == 0)
             {
@@ -141,42 +139,26 @@ namespace EzChat.Web.App_Code.BLL
         /// </summary>
         public static DataTable GetAllUsers()
         {
-            string query = "SELECT * FROM Users ORDER BY CreatedAt DESC";
+            string query = "SELECT * FROM Users ORDER BY UserID DESC";
             return DatabaseHelper.ExecuteQuery(query);
         }
 
         /// <summary>
-        /// 마지막 로그인 시간 업데이트
-        /// </summary>
-        public static void UpdateLastLogin(int userId)
-        {
-            string query = "UPDATE Users SET LastLoginAt = GETUTCDATE() WHERE Id = @Id";
-            DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@Id", userId));
-        }
-
-        /// <summary>
-        /// 사용자 활성화/비활성화 토글
-        /// </summary>
-        public static bool ToggleUserActive(int userId)
-        {
-            string query = "UPDATE Users SET IsActive = ~IsActive WHERE Id = @Id";
-            return DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@Id", userId)) > 0;
-        }
-
-        /// <summary>
-        /// 사용자 삭제 (소프트 삭제)
+        /// 사용자 삭제
         /// </summary>
         public static bool DeleteUser(int userId)
         {
-            string query = @"UPDATE Users SET
-                            IsActive = 0,
-                            Email = 'deleted_' + CAST(Id AS NVARCHAR) + '@deleted.local'
-                            WHERE Id = @Id";
-            return DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@Id", userId)) > 0;
+            // 먼저 해당 사용자의 게시글 삭제
+            string deletePostsQuery = "DELETE FROM Posts WHERE UserID = @UserID";
+            DatabaseHelper.ExecuteNonQuery(deletePostsQuery, new SqlParameter("@UserID", userId));
+
+            // 사용자 삭제
+            string query = "DELETE FROM Users WHERE UserID = @UserID AND IsAdmin = 0";
+            return DatabaseHelper.ExecuteNonQuery(query, new SqlParameter("@UserID", userId)) > 0;
         }
 
         /// <summary>
-        /// 대시보드 통계
+        /// 전체 사용자 수
         /// </summary>
         public static int GetTotalUsers()
         {
@@ -184,30 +166,15 @@ namespace EzChat.Web.App_Code.BLL
             return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query));
         }
 
-        public static int GetActiveUsers()
-        {
-            string query = "SELECT COUNT(*) FROM Users WHERE IsActive = 1";
-            return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query));
-        }
-
-        public static int GetTodayLogins()
-        {
-            string query = "SELECT COUNT(*) FROM Users WHERE CAST(LastLoginAt AS DATE) = CAST(GETUTCDATE() AS DATE)";
-            return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query));
-        }
-
         private static User MapUser(DataRow row)
         {
             return new User
             {
-                Id = Convert.ToInt32(row["Id"]),
-                Email = row["Email"].ToString(),
+                UserID = Convert.ToInt32(row["UserID"]),
+                Username = row["Username"].ToString(),
+                UserLoginID = row["UserLoginID"].ToString(),
                 PasswordHash = row["PasswordHash"].ToString(),
-                DisplayName = row["DisplayName"]?.ToString(),
-                IsAdmin = Convert.ToBoolean(row["IsAdmin"]),
-                IsActive = Convert.ToBoolean(row["IsActive"]),
-                CreatedAt = Convert.ToDateTime(row["CreatedAt"]),
-                LastLoginAt = row["LastLoginAt"] == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(row["LastLoginAt"])
+                IsAdmin = Convert.ToBoolean(row["IsAdmin"])
             };
         }
     }

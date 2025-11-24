@@ -7,7 +7,6 @@
         <div class="post-meta">
             <span>작성자: <asp:Literal ID="litAuthor" runat="server"></asp:Literal></span>
             <span>작성일: <asp:Literal ID="litCreatedAt" runat="server"></asp:Literal></span>
-            <span>조회수: <asp:Literal ID="litViewCount" runat="server"></asp:Literal></span>
         </div>
 
         <div class="post-content">
@@ -16,39 +15,24 @@
 
         <div class="post-actions">
             <a href="/Board/Default.aspx" class="btn btn-secondary">목록</a>
-            <asp:HyperLink ID="lnkEdit" runat="server" CssClass="btn btn-primary" Visible="false">수정</asp:HyperLink>
+            <asp:Button ID="btnEdit" runat="server" Text="수정" CssClass="btn btn-primary" Visible="false" OnClick="btnEdit_Click" />
             <asp:Button ID="btnDelete" runat="server" Text="삭제" CssClass="btn btn-danger" Visible="false"
                 OnClick="btnDelete_Click" OnClientClick="return confirm('정말 삭제하시겠습니까?');" />
         </div>
     </div>
 
-    <div class="comments-section">
-        <h3>댓글 (<asp:Literal ID="litCommentCount" runat="server"></asp:Literal>)</h3>
-
-        <% if (Request.IsAuthenticated) { %>
-        <div class="comment-form">
-            <asp:TextBox ID="txtComment" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="3"
-                placeholder="댓글을 입력하세요..."></asp:TextBox>
-            <asp:Button ID="btnAddComment" runat="server" Text="댓글 작성" CssClass="btn btn-primary" OnClick="btnAddComment_Click" />
+    <!-- 수정 폼 (숨김 상태) -->
+    <asp:Panel ID="pnlEdit" runat="server" Visible="false" CssClass="form-container" style="margin-top: 2rem;">
+        <h2>게시글 수정</h2>
+        <div class="form-group">
+            <asp:Label ID="lblEditTitle" runat="server" AssociatedControlID="txtEditTitle" Text="제목"></asp:Label>
+            <asp:TextBox ID="txtEditTitle" runat="server" CssClass="form-control" MaxLength="200"></asp:TextBox>
         </div>
-        <% } %>
-
-        <div class="comments-list">
-            <asp:Repeater ID="rptComments" runat="server" OnItemCommand="rptComments_ItemCommand">
-                <ItemTemplate>
-                    <div class="comment">
-                        <div class="comment-header">
-                            <strong><%# Eval("AuthorName") ?? Eval("AuthorEmail") %></strong>
-                            <span><%# Convert.ToDateTime(Eval("CreatedAt")).ToString("yyyy-MM-dd HH:mm") %></span>
-                        </div>
-                        <div class="comment-content"><%# Eval("Content") %></div>
-                        <asp:Button ID="btnDeleteComment" runat="server" Text="삭제" CssClass="btn btn-sm btn-danger"
-                            CommandName="Delete" CommandArgument='<%# Eval("Id") %>'
-                            Visible='<%# CanDeleteComment(Eval("AuthorId")) %>'
-                            OnClientClick="return confirm('댓글을 삭제하시겠습니까?');" />
-                    </div>
-                </ItemTemplate>
-            </asp:Repeater>
+        <div class="form-group">
+            <asp:Label ID="lblEditContent" runat="server" AssociatedControlID="txtEditContent" Text="내용"></asp:Label>
+            <asp:TextBox ID="txtEditContent" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="10"></asp:TextBox>
         </div>
-    </div>
+        <asp:Button ID="btnSaveEdit" runat="server" Text="저장" CssClass="btn btn-primary" OnClick="btnSaveEdit_Click" />
+        <asp:Button ID="btnCancelEdit" runat="server" Text="취소" CssClass="btn btn-secondary" OnClick="btnCancelEdit_Click" CausesValidation="false" />
+    </asp:Panel>
 </asp:Content>
