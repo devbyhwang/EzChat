@@ -17,12 +17,12 @@ namespace EzChat.Web.Account
         {
             if (!Page.IsValid) return;
 
-            string email = txtEmail.Text.Trim();
+            string loginId = txtLoginId.Text.Trim();
             string password = txtPassword.Text;
-            string displayName = txtDisplayName.Text.Trim();
+            string username = txtUsername.Text.Trim();
             string errorMessage;
 
-            bool success = UserBLL.Register(email, password, displayName, out errorMessage);
+            bool success = UserBLL.Register(loginId, password, username, out errorMessage);
 
             if (!success)
             {

@@ -1,14 +1,14 @@
 # EzChat 개발 계획서
 
 ## 프로젝트 개요
-ASP.NET Web Forms (.NET Framework 4.8) 기반의 채팅 애플리케이션으로, 관리자 패널과 게시판 기능을 포함합니다.
+ASP.NET Web Forms (.NET Framework 4.8) 기반의 게시판 애플리케이션으로, 관리자 패널을 포함합니다.
 
 ---
 
 ## 전체 할일 목록
 
 ### Phase 1: 프로젝트 초기 설정
-- [x] 프로젝트 문서화 (PLAN.md, TECHSPEC.md, SECURITY.md, AGENT.md)
+- [x] 프로젝트 문서화 (PLAN.md, TECHSPEC.md, SECURITY.md)
 - [x] ASP.NET Web Forms 프로젝트 구조 생성
 - [x] SQL Server 데이터베이스 스키마 설계
 - [x] 데이터 접근 계층 (DAL) 구현
@@ -21,42 +21,32 @@ ASP.NET Web Forms (.NET Framework 4.8) 기반의 채팅 애플리케이션으로
 
 ### Phase 3: 관리자 기능
 - [x] 관리자 역할 기반 접근 제어
-- [x] IP 차단 기능
-- [x] 사용자 계정 삭제/비활성화
-- [x] 채팅방 삭제
-- [x] 관리자 대시보드
-- [x] 감사 로그
+- [x] 사용자 계정 삭제
+- [x] 게시글 삭제
+- [x] 관리자 대시보드 (탭 방식)
 
 ### Phase 4: 게시판 기능
 - [x] 게시글 CRUD
-- [x] 댓글 기능
 - [x] 페이지네이션
 - [x] 검색 기능
 - [x] XSS 방지 처리 (HtmlEncode)
 
-### Phase 5: 채팅 기능
-- [x] 채팅방 생성/삭제
-- [x] 메시지 전송/저장
-- [x] 채팅 기록 조회
-
-### Phase 6: 보안 강화
+### Phase 5: 보안 강화
 - [x] SQL Injection 방지 (매개변수화된 쿼리)
 - [x] XSS 방지 (HtmlEncode)
 - [x] 입력 유효성 검사
 - [x] 보안 헤더 설정
-- [x] 로깅 및 감사
 
 ---
 
 ## 현재 작업 상태
 
-### 1차 개발 완료 (Web Forms 버전)
+### 개발 완료 (간소화 버전)
 
 #### 완료된 기능
 - **인증 시스템**: Forms Authentication 기반 로그인/회원가입
-- **관리자 기능**: IP 차단, 사용자 관리, 채팅방 관리, 감사 로그
-- **게시판**: 글 작성/수정/삭제, 댓글, 검색, 페이지네이션
-- **채팅**: 채팅방 생성/삭제, 메시지 전송
+- **관리자 기능**: 사용자 관리, 게시글 관리 (탭 방식)
+- **게시판**: 글 작성/수정/삭제, 검색, 페이지네이션
 
 ---
 
@@ -73,7 +63,7 @@ ASP.NET Web Forms (.NET Framework 4.8) 기반의 채팅 애플리케이션으로
 3. F5로 실행 (IIS Express)
 
 ### 기본 관리자 계정
-- 이메일: admin@ezchat.local
+- 아이디: admin
 - 비밀번호: Admin@123!
 
 **중요**: 프로덕션 환경에서는 반드시 기본 관리자 비밀번호를 변경하세요!
@@ -87,15 +77,49 @@ EzChat/
 ├── EzChat.Web/
 │   ├── App_Code/
 │   │   ├── BLL/          # 비즈니스 로직
+│   │   │   ├── SecurityHelper.cs
+│   │   │   ├── UserBLL.cs
+│   │   │   └── BoardBLL.cs
 │   │   ├── DAL/          # 데이터 접근
+│   │   │   └── DatabaseHelper.cs
 │   │   └── Models/       # 모델
+│   │       └── User.cs
 │   ├── Admin/            # 관리자 페이지 (.aspx)
+│   │   └── Default.aspx  # 탭 방식 관리 페이지
 │   ├── Account/          # 인증 페이지 (.aspx)
+│   │   ├── Login.aspx
+│   │   └── Register.aspx
 │   ├── Board/            # 게시판 페이지 (.aspx)
-│   ├── Chat/             # 채팅 페이지 (.aspx)
+│   │   ├── Default.aspx  # 게시글 목록
+│   │   ├── Detail.aspx   # 게시글 상세 (수정 포함)
+│   │   └── Create.aspx   # 게시글 작성
 │   ├── MasterPages/      # 마스터 페이지
+│   │   └── Site.Master
 │   ├── Content/          # CSS, JS
+│   ├── Default.aspx      # 메인 페이지
 │   ├── Web.config
 │   └── Global.asax
-└── 문서 (PLAN.md, TECHSPEC.md, SECURITY.md, AGENT.md)
+└── 문서 (PLAN.md, TECHSPEC.md, SECURITY.md)
 ```
+
+---
+
+## 데이터베이스 구조
+
+### Users 테이블
+| 컬럼명 | 타입 | 설명 |
+|--------|------|------|
+| UserID | INT (PK) | 사용자 ID |
+| Username | NVARCHAR(50) | 사용자 이름 |
+| UserLoginID | NVARCHAR(100) | 로그인 ID (UNIQUE) |
+| PasswordHash | NVARCHAR(256) | 비밀번호 해시 |
+| IsAdmin | BIT | 관리자 여부 |
+
+### Posts 테이블
+| 컬럼명 | 타입 | 설명 |
+|--------|------|------|
+| PostID | INT (PK) | 게시글 ID |
+| UserID | INT (FK) | 작성자 ID |
+| Title | NVARCHAR(200) | 제목 |
+| Content | NVARCHAR(MAX) | 내용 |
+| CreatedAt | DATETIME | 작성일 |

@@ -91,105 +91,30 @@ namespace EzChat.Web.App_Code.DAL
                 -- 사용자 테이블
                 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' AND xtype='U')
                 CREATE TABLE Users (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
-                    Email NVARCHAR(100) NOT NULL UNIQUE,
+                    UserID INT IDENTITY(1,1) PRIMARY KEY,
+                    Username NVARCHAR(50) NOT NULL,
+                    UserLoginID NVARCHAR(100) NOT NULL UNIQUE,
                     PasswordHash NVARCHAR(256) NOT NULL,
-                    DisplayName NVARCHAR(50),
-                    IsAdmin BIT DEFAULT 0,
-                    IsActive BIT DEFAULT 1,
-                    CreatedAt DATETIME DEFAULT GETUTCDATE(),
-                    LastLoginAt DATETIME NULL
-                );
-
-                -- 채팅방 테이블
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ChatRooms' AND xtype='U')
-                CREATE TABLE ChatRooms (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
-                    Name NVARCHAR(100) NOT NULL,
-                    Description NVARCHAR(500),
-                    CreatedById INT NOT NULL,
-                    CreatedAt DATETIME DEFAULT GETUTCDATE(),
-                    IsActive BIT DEFAULT 1,
-                    MaxUsers INT DEFAULT 50,
-                    FOREIGN KEY (CreatedById) REFERENCES Users(Id)
-                );
-
-                -- 채팅 메시지 테이블
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ChatMessages' AND xtype='U')
-                CREATE TABLE ChatMessages (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
-                    RoomId INT NOT NULL,
-                    UserId INT NOT NULL,
-                    Content NVARCHAR(2000) NOT NULL,
-                    SentAt DATETIME DEFAULT GETUTCDATE(),
-                    IsDeleted BIT DEFAULT 0,
-                    FOREIGN KEY (RoomId) REFERENCES ChatRooms(Id),
-                    FOREIGN KEY (UserId) REFERENCES Users(Id)
+                    IsAdmin BIT DEFAULT 0
                 );
 
                 -- 게시글 테이블
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='BoardPosts' AND xtype='U')
-                CREATE TABLE BoardPosts (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Posts' AND xtype='U')
+                CREATE TABLE Posts (
+                    PostID INT IDENTITY(1,1) PRIMARY KEY,
+                    UserID INT NOT NULL,
                     Title NVARCHAR(200) NOT NULL,
                     Content NVARCHAR(MAX) NOT NULL,
-                    AuthorId INT NOT NULL,
                     CreatedAt DATETIME DEFAULT GETUTCDATE(),
-                    UpdatedAt DATETIME NULL,
-                    ViewCount INT DEFAULT 0,
-                    IsDeleted BIT DEFAULT 0,
-                    FOREIGN KEY (AuthorId) REFERENCES Users(Id)
-                );
-
-                -- 댓글 테이블
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Comments' AND xtype='U')
-                CREATE TABLE Comments (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
-                    PostId INT NOT NULL,
-                    AuthorId INT NOT NULL,
-                    Content NVARCHAR(1000) NOT NULL,
-                    CreatedAt DATETIME DEFAULT GETUTCDATE(),
-                    IsDeleted BIT DEFAULT 0,
-                    FOREIGN KEY (PostId) REFERENCES BoardPosts(Id),
-                    FOREIGN KEY (AuthorId) REFERENCES Users(Id)
-                );
-
-                -- IP 차단 테이블
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='IpBans' AND xtype='U')
-                CREATE TABLE IpBans (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
-                    IpAddress NVARCHAR(45) NOT NULL,
-                    Reason NVARCHAR(500),
-                    BannedById INT NOT NULL,
-                    BannedAt DATETIME DEFAULT GETUTCDATE(),
-                    ExpiresAt DATETIME NULL,
-                    IsActive BIT DEFAULT 1,
-                    FOREIGN KEY (BannedById) REFERENCES Users(Id)
-                );
-
-                -- 감사 로그 테이블
-                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLogs' AND xtype='U')
-                CREATE TABLE AuditLogs (
-                    Id INT IDENTITY(1,1) PRIMARY KEY,
-                    AdminId INT NOT NULL,
-                    Action NVARCHAR(100) NOT NULL,
-                    TargetType NVARCHAR(50),
-                    TargetId NVARCHAR(100),
-                    Details NVARCHAR(1000),
-                    Timestamp DATETIME DEFAULT GETUTCDATE(),
-                    IpAddress NVARCHAR(45),
-                    FOREIGN KEY (AdminId) REFERENCES Users(Id)
+                    FOREIGN KEY (UserID) REFERENCES Users(UserID)
                 );
 
                 -- 인덱스 생성
-                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_IpBans_IpAddress')
-                CREATE INDEX IX_IpBans_IpAddress ON IpBans(IpAddress);
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_Posts_CreatedAt')
+                CREATE INDEX IX_Posts_CreatedAt ON Posts(CreatedAt DESC);
 
-                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_BoardPosts_CreatedAt')
-                CREATE INDEX IX_BoardPosts_CreatedAt ON BoardPosts(CreatedAt DESC);
-
-                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_ChatMessages_RoomId')
-                CREATE INDEX IX_ChatMessages_RoomId ON ChatMessages(RoomId, SentAt DESC);
+                IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name='IX_Users_UserLoginID')
+                CREATE INDEX IX_Users_UserLoginID ON Users(UserLoginID);
             ";
 
             try

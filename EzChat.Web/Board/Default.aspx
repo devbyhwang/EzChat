@@ -16,22 +16,14 @@
 
     <asp:GridView ID="gvPosts" runat="server" AutoGenerateColumns="false" CssClass="table" ShowHeader="true">
         <Columns>
-            <asp:BoundField DataField="Id" HeaderText="번호" />
+            <asp:BoundField DataField="PostID" HeaderText="번호" />
             <asp:TemplateField HeaderText="제목">
                 <ItemTemplate>
-                    <a href="/Board/Detail.aspx?id=<%# Eval("Id") %>"><%# Eval("Title") %></a>
-                    <% if (Convert.ToInt32(Eval("CommentCount")) > 0) { %>
-                        <span class="comment-count">[<%# Eval("CommentCount") %>]</span>
-                    <% } %>
+                    <a href="/Board/Detail.aspx?id=<%# Eval("PostID") %>"><%# Eval("Title") %></a>
                 </ItemTemplate>
             </asp:TemplateField>
-            <asp:TemplateField HeaderText="작성자">
-                <ItemTemplate>
-                    <%# Eval("AuthorName") ?? Eval("AuthorEmail") %>
-                </ItemTemplate>
-            </asp:TemplateField>
+            <asp:BoundField DataField="Username" HeaderText="작성자" />
             <asp:BoundField DataField="CreatedAt" HeaderText="작성일" DataFormatString="{0:yyyy-MM-dd}" />
-            <asp:BoundField DataField="ViewCount" HeaderText="조회수" />
         </Columns>
     </asp:GridView>
 

@@ -29,30 +29,19 @@ EzChat/
 │   │   ├── BLL/
 │   │   │   ├── SecurityHelper.cs
 │   │   │   ├── UserBLL.cs
-│   │   │   ├── BoardBLL.cs
-│   │   │   ├── ChatBLL.cs
-│   │   │   └── IpBanBLL.cs
+│   │   │   └── BoardBLL.cs
 │   │   ├── DAL/
 │   │   │   └── DatabaseHelper.cs
 │   │   └── Models/
 │   │       └── User.cs
 │   ├── Admin/
-│   │   ├── Default.aspx(.cs)
-│   │   ├── Users.aspx(.cs)
-│   │   ├── IpBans.aspx(.cs)
-│   │   ├── Rooms.aspx(.cs)
-│   │   └── AuditLogs.aspx(.cs)
+│   │   └── Default.aspx(.cs)
 │   ├── Account/
 │   │   ├── Login.aspx(.cs)
 │   │   └── Register.aspx(.cs)
 │   ├── Board/
 │   │   ├── Default.aspx(.cs)
 │   │   ├── Detail.aspx(.cs)
-│   │   ├── Create.aspx(.cs)
-│   │   └── Edit.aspx(.cs)
-│   ├── Chat/
-│   │   ├── Default.aspx(.cs)
-│   │   ├── Room.aspx(.cs)
 │   │   └── Create.aspx(.cs)
 │   ├── MasterPages/
 │   │   └── Site.Master(.cs)
@@ -73,68 +62,22 @@ EzChat/
 ### 테이블 구조
 
 #### Users
-- Id (PK, INT, IDENTITY)
-- Email (NVARCHAR(100), UNIQUE)
-- PasswordHash (NVARCHAR(256))
-- DisplayName (NVARCHAR(50))
-- IsAdmin (BIT)
-- IsActive (BIT)
-- CreatedAt (DATETIME)
-- LastLoginAt (DATETIME, NULL)
+| 컬럼명 | 타입 | 제약 |
+|--------|------|------|
+| UserID | INT | PK, IDENTITY |
+| Username | NVARCHAR(50) | NOT NULL |
+| UserLoginID | NVARCHAR(100) | NOT NULL, UNIQUE |
+| PasswordHash | NVARCHAR(256) | NOT NULL |
+| IsAdmin | BIT | DEFAULT 0 |
 
-#### ChatRooms
-- Id (PK, INT, IDENTITY)
-- Name (NVARCHAR(100))
-- Description (NVARCHAR(500))
-- CreatedById (FK -> Users)
-- CreatedAt (DATETIME)
-- IsActive (BIT)
-- MaxUsers (INT)
-
-#### ChatMessages
-- Id (PK, INT, IDENTITY)
-- RoomId (FK -> ChatRooms)
-- UserId (FK -> Users)
-- Content (NVARCHAR(2000))
-- SentAt (DATETIME)
-- IsDeleted (BIT)
-
-#### BoardPosts
-- Id (PK, INT, IDENTITY)
-- Title (NVARCHAR(200))
-- Content (NVARCHAR(MAX))
-- AuthorId (FK -> Users)
-- CreatedAt (DATETIME)
-- UpdatedAt (DATETIME, NULL)
-- ViewCount (INT)
-- IsDeleted (BIT)
-
-#### Comments
-- Id (PK, INT, IDENTITY)
-- PostId (FK -> BoardPosts)
-- AuthorId (FK -> Users)
-- Content (NVARCHAR(1000))
-- CreatedAt (DATETIME)
-- IsDeleted (BIT)
-
-#### IpBans
-- Id (PK, INT, IDENTITY)
-- IpAddress (NVARCHAR(45))
-- Reason (NVARCHAR(500))
-- BannedById (FK -> Users)
-- BannedAt (DATETIME)
-- ExpiresAt (DATETIME, NULL)
-- IsActive (BIT)
-
-#### AuditLogs
-- Id (PK, INT, IDENTITY)
-- AdminId (FK -> Users)
-- Action (NVARCHAR(100))
-- TargetType (NVARCHAR(50))
-- TargetId (NVARCHAR(100))
-- Details (NVARCHAR(1000))
-- Timestamp (DATETIME)
-- IpAddress (NVARCHAR(45))
+#### Posts
+| 컬럼명 | 타입 | 제약 |
+|--------|------|------|
+| PostID | INT | PK, IDENTITY |
+| UserID | INT | FK → Users.UserID |
+| Title | NVARCHAR(200) | NOT NULL |
+| Content | NVARCHAR(MAX) | NOT NULL |
+| CreatedAt | DATETIME | DEFAULT GETUTCDATE() |
 
 ---
 
@@ -164,22 +107,12 @@ EzChat/
 - `/Account/Register.aspx` - 회원가입
 
 ### 관리자
-- `/Admin/Default.aspx` - 대시보드
-- `/Admin/Users.aspx` - 사용자 관리
-- `/Admin/IpBans.aspx` - IP 차단 관리
-- `/Admin/Rooms.aspx` - 채팅방 관리
-- `/Admin/AuditLogs.aspx` - 감사 로그
+- `/Admin/Default.aspx` - 관리자 페이지 (사용자/게시글 탭)
 
 ### 게시판
 - `/Board/Default.aspx` - 게시글 목록
-- `/Board/Detail.aspx?id=` - 게시글 상세
+- `/Board/Detail.aspx?id=` - 게시글 상세/수정
 - `/Board/Create.aspx` - 게시글 작성
-- `/Board/Edit.aspx?id=` - 게시글 수정
-
-### 채팅
-- `/Chat/Default.aspx` - 채팅방 목록
-- `/Chat/Room.aspx?id=` - 채팅방
-- `/Chat/Create.aspx` - 채팅방 생성
 
 ---
 
