@@ -35,7 +35,7 @@ namespace EzChat.Web.App_Code.BLL
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 return DatabaseHelper.ExecuteQuery(query,
-                    new SqlParameter("@SearchTerm", $"%{searchTerm}%"),
+                    new SqlParameter("@SearchTerm", string.Concat("%", searchTerm, "%")),
                     new SqlParameter("@Offset", offset),
                     new SqlParameter("@PageSize", pageSize));
             }
@@ -56,7 +56,7 @@ namespace EzChat.Web.App_Code.BLL
             {
                 query += " WHERE (Title LIKE @SearchTerm OR Content LIKE @SearchTerm)";
                 return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query,
-                    new SqlParameter("@SearchTerm", $"%{searchTerm}%")));
+                    new SqlParameter("@SearchTerm", string.Concat("%", searchTerm, "%"))));
             }
 
             return Convert.ToInt32(DatabaseHelper.ExecuteScalar(query));
